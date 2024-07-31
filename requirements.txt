@@ -1,0 +1,6 @@
+pylint==3.2.3
+coverage==7.5.3
+mypy==1.10.0
+cryptography
+pyotp
+qrcode
