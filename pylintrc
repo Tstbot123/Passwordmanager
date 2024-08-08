@@ -1,15 +1,18 @@
-[BASIC]
-argument-naming-style=camelCase
-attr-naming-style=camelCase
-class-attribute-naming-style=camelCase
-docstring-min-length=5
-function-naming-style=camelCase
-method-naming-style=camelCase
-module-naming-style=camelCase
-variable-naming-style=camelCase
+[MASTER]
+ignore=test_*.py
+persistent=yes
+load-plugins=pylint.extensions.mccabe
 
-[DESIGN]
-max-attributes=10
+[MESSAGES CONTROL]
+disable=C0114,C0115,C0116
+
+[BASIC]
+good-names=i,j,k,e,x,_
+variable-rgx=[a-z_][a-z0-9_]{0,30}$
 
 [FORMAT]
-max-line-length=160
+max-line-length=100
+indent-string='    '
+
+[DESIGN]
+max-args=5
