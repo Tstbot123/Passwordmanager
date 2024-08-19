@@ -1,0 +1,16 @@
+import os
+import re
+import time
+import json
+import getpass
+import random
+import string
+import hashlib
+import urllib.request
+import pyotp
+import qrcode
+from cryptography.fernet import Fernet
+from datetime import datetime
+pylint 3.2.3
+coverage 7.5.3
+mypy 1.10.0
