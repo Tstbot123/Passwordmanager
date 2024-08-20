@@ -1,5 +1,0 @@
-cryptography==3.4.7
-requests==2.25.1
-pylint==3.2.3
-coverage==7.5.3
-mypy==1.10.0
