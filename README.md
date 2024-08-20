@@ -1,1 +1,0 @@
-Passwordmanager von Philipp Assfalg, Lucas Boyn, Maximilian Marschall und Ben Köger
