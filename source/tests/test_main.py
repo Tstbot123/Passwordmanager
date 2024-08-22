@@ -8,7 +8,7 @@ class TestPasswordManager(unittest.TestCase):
 
     def setUp(self) -> None:
         """Vorbereitung vor jedem Test."""
-        self.manager = PasswordManager()
+        self.manager = PasswordManager(username="test_user")#Username an Konstruktor
         self.manager.masterPasswordHash = self.manager.hashPassword("master_password")
 
         # Temporäre Dateien erstellen, um echte Dateien zu vermeiden
