@@ -16,23 +16,25 @@ import pyotp
 
 
 class PasswordManager:
-    """Hauptklasse"""
-    def __init__(self) -> None:
-        self.masterPasswordhash: Optional[str] = None
-        self.dataFile: str = "passwords.json"
-        self.keyFile: str = "key.key"
-        self.masterPasswordfile: str = "master_password.hash"
-        self.totpSecretfile: str = "totp_secret.key"
+    """Hauptklasse für das Passwortmanagement"""
+    def __init__(self, username: str) -> None:
+        self.username = username
+        self.userDirectory = os.path.join("users", self.username)
+        self.dataFile = os.path.join(self.userDirectory, "passwords.json")
+        self.keyFile = os.path.join(self.userDirectory, "key.key")
+        self.masterPasswordfile = os.path.join(self.userDirectory, "master_password.hash")
+        self.totpSecretfile = os.path.join(self.userDirectory, "totp_secret.key")
         self.passwords: Dict[str, Dict[str, Any]] = {}
         self.totpSecret: str = self.loadTotpsecret()
         self.failedAttempts: int = 0
         self.lockoutTime: float = 0
+        self.masterPasswordhash: Optional[str] = None
         self.loadMasterpassword()
 
     def loadMasterpassword(self) -> None:
         """Lädt den gespeicherten Master-Passwort-Hash, falls vorhanden."""
         if os.path.exists(self.masterPasswordfile):
-            with open(self.master_password_file, "r", encoding="utf-8") as file:
+            with open(self.masterPasswordfile, "r", encoding="utf-8") as file:
                 self.masterPasswordhash = file.read().strip()
 
     def saveMasterpassword(self) -> None:
@@ -70,7 +72,7 @@ class PasswordManager:
     def loadKey(self) -> bytes:
         """Lädt den Verschlüsselungsschlüssel oder erstellt einen neuen, wenn keiner existiert."""
         if os.path.exists(self.keyFile):
-            with open(self.key_file, "rb") as file:
+            with open(self.keyFile, "rb") as file:
                 return file.read()
         else:
             key = Fernet.generate_key()
@@ -95,7 +97,7 @@ class PasswordManager:
     def loadPasswords(self) -> None:
         """Lädt gespeicherte Passwörter aus einer Datei."""
         if os.path.exists(self.dataFile):
-            with open(self.data_file, "r", encoding="utf-8") as file:
+            with open(self.dataFile, "r", encoding="utf-8") as file:
                 self.passwords = json.load(file)
 
     def savePasswords(self) -> None:
@@ -112,7 +114,7 @@ class PasswordManager:
     def loadTotpsecret(self) -> str:
         """Lädt oder generiert das TOTP-Secret für die Zwei-Faktor-Authentifizierung."""
         if os.path.exists(self.totpSecretfile):
-            with open(self.totp_secret_file, "r", encoding="utf-8") as file:
+            with open(self.totpSecretfile, "r", encoding="utf-8") as file:
                 return file.read().strip()
         else:
             totpSecret = pyotp.random_base32()
@@ -123,10 +125,10 @@ class PasswordManager:
     def generateQrcode(self) -> None:
         """Generiert und speichert einen QR-Code für die Zwei-Faktor-Authentifizierung."""
         totp = pyotp.TOTP(self.totpSecret)
-        uri = totp.provisioning_uri(name="PasswordManager", issuer_name="SecureApp")
+        uri = totp.provisioning_uri(name=f"PasswordManager:{self.username}", issuer_name="SecureApp")
         qr = qrcode.make(uri)
-        qr.save("totp_qr.png")
-        print("QR code for 2FA generated as totp_qr.png")
+        qr.save(f"{self.username}_totp_qr.png")
+        print(f"QR code for 2FA generated as {self.username}_totp_qr.png")
 
     def checkPasswordstrength(self, password: str) -> bool:
         """Überprüft die Stärke eines Passworts basierend auf Länge und Zeichensatz."""
@@ -244,11 +246,81 @@ class PasswordManager:
             return None
 
 
+class UserManager:
+    """Klasse zum Verwalten von Benutzern"""
+    def __init__(self) -> None:
+        self.userFile = "users.json"
+        self.users: Dict[str, str] = {}
+        self.loadUsers()
+
+    def loadUsers(self) -> None:
+        """Lädt die Benutzerinformationen aus der Datei."""
+        if os.path.exists(self.userFile):
+            with open(self.userFile, "r", encoding="utf-8") as file:
+                self.users = json.load(file)
+
+    def saveUsers(self) -> None:
+        """Speichert die Benutzerinformationen in einer Datei."""
+        with open(self.userFile, "w", encoding="utf-8") as file:
+            json.dump(self.users, file, indent=4)
+
+    def registerUser(self) -> Optional[str]:
+        """Registriert einen neuen Benutzer."""
+        username = input("Enter your username: ")
+        if username in self.users:
+            print("Username already exists. Please choose another username.")
+            return None
+
+        password = getpass.getpass("Set your master password: ")
+        hashedPassword = hashlib.sha256(password.encode()).hexdigest()
+        self.users[username] = hashedPassword
+
+        os.makedirs(os.path.join("users", username), exist_ok=True)
+        self.saveUsers()
+        print("User registered successfully.")
+        return username
+
+    def authenticateUser(self) -> Optional[str]:
+        """Authentifiziert einen Benutzer."""
+        username = input("Enter your username: ")
+        if username not in self.users:
+            print("Username not found.")
+            return None
+
+        password = getpass.getpass("Enter your master password: ")
+        hashedPassword = hashlib.sha256(password.encode()).hexdigest()
+
+        if hashedPassword == self.users[username]:
+            print("Authentication successful.")
+            return username
+        else:
+            print("Authentication failed.")
+            return None
+
+
 def main() -> None:
     """Main function zum starten"""
-    passwordManager = PasswordManager()
+    userManager = UserManager()
 
-    # Check if the master password is set, if not, set it
+    print("Welcome to the Password Manager")
+    print("1. Register new user")
+    print("2. Login")
+    choice = input("Choose an option: ")
+
+    if choice == "1":
+        username = userManager.registerUser()
+        if not username:
+            return
+    elif choice == "2":
+        username = userManager.authenticateUser()
+        if not username:
+            return
+    else:
+        print("Invalid choice.")
+        return
+
+    passwordManager = PasswordManager(username)
+
     if not passwordManager.masterPasswordhash:
         print("No master password found. Please set a master password.")
         passwordManager.setMasterpassword()
