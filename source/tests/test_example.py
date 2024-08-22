@@ -12,7 +12,7 @@ class TestPasswordManagerAdvanced(unittest.TestCase):
 
     def setUp(self) -> None:
         """Vorbereitung vor jedem Test."""
-        self.manager: PasswordManager = PasswordManager()
+        self.manager: PasswordManager = PasswordManager(username="test_user")#Username an Konstruktor
         self.manager.masterPasswordHash = self.manager.hashPassword("master_password")
         self.manager.failedAttempts = 0
         self.manager.lockoutTime = 0
